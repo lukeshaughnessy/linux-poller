@@ -1,0 +1,127 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
+from crontab import CronTab
+import cgi
+import cgitb
+import psycopg2
+import sys
+import os
+import subprocess
+import re
+
+
+cgitb.enable()
+
+print "Content-type: text/html\n\n"
+
+
+
+form=cgi.FieldStorage()
+
+
+#if "site_id" not in form:
+ #   print "<h1>The text input box was empty.</h1>"
+#else:
+ #   VAR_SITE_ID = form.getvalue('site_id')
+ 
+
+VAR_SITE_ID = 'none'
+
+if "site_name" not in form:
+    print "<h1>The text input box was empty.</h1>"
+else:
+    VAR_SITE_NAME = form.getvalue('site_name')
+    VAR_SITE_NAME = VAR_SITE_NAME.strip()
+    
+
+
+if "ip_address" not in form:
+    print "<h1>The text input box was empty.</h1>"
+else:
+    VAR_IP_ADDRESS= form.getvalue('ip_address')
+    VAR_IP_ADDRESS = VAR_IP_ADDRESS.strip()
+
+
+if "community_name" not in form:
+    print "<h1>The text input box was empty.</h1>"
+else:
+    VAR_COMMUNITY_NAME = form.getvalue('community_name')
+    VAR_COMMUNITY_NAME = VAR_COMMUNITY_NAME.strip()
+
+if "poll_freq" not in form:
+    print "<h1>The text input box was empty.</h1>"
+else:
+    VAR_POLL_FREQ = form.getvalue('poll_freq')
+    VAR_POLL_FREQ = VAR_POLL_FREQ.strip()
+
+VAR_FTP_USER = form.getvalue('ftp_user')
+
+VAR_FTP_PASS = form.getvalue('ftp_pass')
+
+VAR_POLLING_ENABLE = form.getvalue('poll_enable')
+
+VAR_FTP_ENABLE = form.getvalue('ftp_enable')
+
+
+VAR_OBS_SCALAR = form.getlist('obs')
+
+
+pollList = (
+    (VAR_SITE_ID, VAR_SITE_NAME, VAR_IP_ADDRESS, VAR_COMMUNITY_NAME, VAR_POLL_FREQ, VAR_FTP_USER, VAR_FTP_PASS, VAR_POLLING_ENABLE, VAR_FTP_ENABLE, VAR_OBS_SCALAR),
+
+)
+
+con = None
+
+try:
+
+    con = psycopg2.connect(database='pollconfdb', user='vmuser')
+
+    cur = con.cursor()
+
+    query = "INSERT INTO pollers (site_id, site_name, ip_address, community_name, poll_freq, ftp_user, ftp_pass, polling_enable, ftp_enable, obs_scalar) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    cur.executemany(query, pollList)
+
+    con.commit()
+  
+except psycopg2.DatabaseError, e:
+    print 'Error %s' % e    
+    sys.exit(1)
+
+    
+finally:
+    
+    if con:
+        con.close()
+
+
+
+#add crontab entry and overwrite if existing (https://pypi.python.org/pypi/python-crontab/1.7.2)
+#'if' statement checks for non-numeric chars to test for crontab or increment input from user
+
+
+tab = CronTab()
+tab.remove_all(VAR_SITE_NAME)
+cmd = 'cd /tmp; /tmp/poll.py' + ' ' + VAR_SITE_NAME
+cron_job = tab.new(cmd)
+match = re.search("\D", VAR_POLL_FREQ)
+if match is None:
+    cron_job.minute.every(VAR_POLL_FREQ)
+else:
+    cron_job.setall(VAR_POLL_FREQ)
+if VAR_POLLING_ENABLE == 'off':
+    cron_job.enable(False)
+else:
+    cron_job.enable()
+tab.write()
+
+
+
+
+print "<h2>Site Info Has Been Submitted!</h2>"
+print '<br>'
+print '<br>'
+print '<a href="/index.html">Return to Homepage</a>'
+

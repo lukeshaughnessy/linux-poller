@@ -1,0 +1,52 @@
+
+form {
+    /* Just to center the form on the page */
+    margin: 0 auto;
+    width: 800px;
+    /* To see the outline of the form */
+    padding: 1em;
+    border: 1px solid #CCC;
+    border-radius: 1em;
+    font-family: "Helvetica";
+    font-size:90%;
+    background-color:#EFF2FB
+}
+
+h2{
+   text-align: center;
+   font-family: "Helvetica";
+   color:#2E9AFE;
+}
+ 
+input:focus, textarea:focus {
+    /* To give a little highlight on active elements */
+    border-color: #000;
+}
+
+a:hover {
+text-decoration:none;
+}
+
+label {
+    /* To make sure that all label have the same size and are properly align */
+    display: inline-block;
+    width: 90px;
+    padding: 1em;
+    text-align: right;
+    font-family: "Helvetica";
+}
+ 
+legend {
+font-family: "Helvetica";
+font-weight: bold;
+}
+
+
+h4 {
+   font-family: "Helvetica";
+   text-align: center;
+}
+div {
+  font-family: "Helvetica";
+  text-align: center;
+}

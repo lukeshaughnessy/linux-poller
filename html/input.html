@@ -1,0 +1,211 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="mystyle.css">
+</head>
+
+<body>
+<h2>VAISALA SITE POLLING CONFIGURATION</h1>
+<h4> Use this form to add site configuratation parameters. </h4>
+<form action="/cgi-bin/input.py" method="POST">
+
+<fieldset>
+<legend>Site Info</legend>
+<br>
+     <label for="Sitename">Site Name:</label>
+     <input type="text" name="site_name" value="">
+<br>
+    <label for="Ipaddress">IP Address:</label>
+    <input type="text" name="ip_address" value="">
+<br>
+    <label for="community">Community:</label>
+    <input type="text" name="community_name" value="">
+<br>
+    <label for="snmpport">SNMP Port:</label>
+    <input type="text" name="snmp_port" value="">
+<br>
+
+</fieldset>
+<br>
+<fieldset>
+ <legend> Schedule (Enter EITHER Increment in Minutes or Crontab Format) </legend>
+<br>
+     <label for="PollingFrequency">XML Crontab:</label>   
+     <input type="text" name="poll_freq" value="">
+<br>
+     <label for="ftp_freq">FTP Crontab:</label>   
+     <input type="text" name="ftp_freq" value="">
+<br>
+
+</fieldset>
+<br>
+
+<fieldset>
+ <legend>FTP Settings</legend>
+
+     <label for="FTP_User">User:</label>
+     <input type="text" name="ftp_user" value="">
+<br>
+     <label for="FTP_Password">Password:</label>
+     <input type="text" name="ftp_pass" value="">
+<br>
+     <label for="img_dir">Remote Directory:</label>
+     <input type="text" name="img_dir" value="">
+<br>
+
+<input type="radio" name="ftp_enable" value="on">Enabled
+<br>
+<input type="radio" name="ftp_enable" checked="checked" value="off">Disabled
+
+<br>
+</fieldset>
+<br>
+
+ <fieldset>
+  <legend>HMP</legend>
+    <input type="checkbox" name="obs" value="essAirTemperature.1"> essAirTemperature.1
+<br>
+
+    <input type="checkbox" name="obs" value="essDewpointTemp.0" > essDewpointTemp.0
+<br>
+
+
+<input type="checkbox" name="obs" value="essRelativeHumidity.0" > essRelativeHumidity.0
+<br>
+</fieldset>
+<br>
+<fieldset>
+  <legend>DCS/DST and Guardian</legend>
+
+
+<input type="checkbox" name="obs" value="spectroSurfaceStatus.1" > spectroSurfaceStatus.1
+<br>
+
+<input type="checkbox" name="obs" value="spectroSurfaceWaterLayer.1" > spectroSurfaceWaterLayer.1
+<br>
+
+<input type="checkbox" name="obs" value="spectroSurfaceIceLayer.1" > spectroSurfaceIceLayer.1
+<br>
+
+<input type="checkbox" name="obs" value="spectroSurfaceSnowLayer.1" > spectroSurfaceSnowLayer.1
+<br>
+
+<input type="checkbox" name="obs" value="spectroSurfaceFrictionIndex.1" > spectroSurfaceFrictionIndex.1
+<br>
+<input type="checkbox" name="obs" value="spectroSurfaceTemperature.1" > spectroSurfaceTemperature.1
+<br>
+</fieldset>
+<br>
+<fieldset>
+  <legend>Guardian</legend>
+<input type="checkbox" name="obs" value="spectroAirTemperature.1" > spectroAirTemperature.1
+<br>
+
+<input type="checkbox" name="obs" value="spectroRelativeHumidity.1" > spectroRelativeHumidity.1
+<br>
+
+<input type="checkbox" name="obs" value="spectroDewpointTemp.1" > spectroDewpointTemp.1
+<br>
+
+</fieldset>
+<br>
+
+<fieldset>
+  <legend>WMS and WMT</legend>
+
+<input type="checkbox" name="obs" value="essAvgWindSpeed.0" > essAvgWindSpeed.0
+<br>
+
+<input type="checkbox" name="obs" value="essAvgWindDirection.0" > essAvgWindDirection.0
+<br>
+
+<input type="checkbox" name="obs" value="essMaxWindGustSpeed.0" > essMaxWindGustSpeed.0
+<br>
+
+<input type="checkbox" name="obs" value="essMaxWindGustDir.0" > essMaxWindGustDir.0
+<br>
+</fieldset>
+<br>
+
+<fieldset>
+  <legend>PWD</legend>
+<input type="checkbox" name="obs" value="essPrecipSituation.0" > essPrecipSituation.0
+<br>
+
+<input type="checkbox" name="obs" value="essPrecipRate.0" > essPrecipRate.0
+<br>
+
+<input type="checkbox" name="obs" value="essPrecipitationOneHour.0" > essPrecipitationOneHour.0
+<br>
+
+<input type="checkbox" name="obs" value="essPrecipitationThreeHours.0" > essPrecipitationThreeHours.0
+<br>
+
+<input type="checkbox" name="obs" value="essPrecipitationSixHours.0" > essPrecipitationSixHours.0
+<br>
+
+<input type="checkbox" name="obs" value="essPrecipitationTwelveHours.0" > essPrecipitationTwelveHours.0
+<br>
+
+<input type="checkbox" name="obs" value="essPrecipitation24Hours.0" > essPrecipitation24Hours.0
+<br>
+
+<input type="checkbox" name="obs" value="essVisibility.0" > essVisibility.0
+<br>
+
+<input type="checkbox" name="obs" value="essPrecipYesNo.0" > essPrecipYesNo.0 
+<br>
+</fieldset>
+<br>
+
+
+<fieldset>
+  <legend>PTB</legend>
+<input type="checkbox" name="obs" value="essAtmosphericPressure.0" > essAtmosphericPressure.0
+<br>
+</fieldset>
+<br>
+
+<fieldset>
+  <legend>DRS and FP2000</legend>
+
+<input type="checkbox" name="obs" value="essSurfaceTemperature.1" >essSurfaceTemperature.1
+<br>
+
+<input type="checkbox" name="obs" value="essSurfaceFreezepoint.1" > essSurfaceFreezepoint.1
+<br>
+
+<input type="checkbox" name="obs" value="essSurfaceStatus.1" > essSurfaceStatus.1
+<br>
+</fieldset>
+<br>
+<fieldset>
+  <legend>DTS</legend>
+<input type="checkbox" name="obs" value="essSubSurfaceTemperature.1" > essSubSurfaceTemperature.1
+<br>
+</fieldset>
+<br>
+<br>
+<fieldset>
+  <legend>SR50</legend>
+<input type="checkbox" name="obs" value="essAdjacentSnowDepth.0" > essAdjacentSnowDepth.0
+<br>
+</fieldset>
+<br>
+<br>
+<fieldset>
+  <legend>Enable XML Polling</legend>
+<br>
+<input type="radio" name="poll_enable" value="on">Enabled
+<br>
+<input type="radio" name="poll_enable" checked="checked" value="off">Disabled
+<br>
+<br>
+    <input type="submit" value="Submit">  
+    <input type="reset" value="Reset">
+<br>
+</form>
+
+</body>
+</html>

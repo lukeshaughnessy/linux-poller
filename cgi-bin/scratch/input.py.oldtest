@@ -1,0 +1,152 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
+from crontab import CronTab
+import cgi
+import cgitb
+import psycopg2
+import sys
+import os
+import subprocess
+import re
+
+
+cgitb.enable()
+
+print "Content-type: text/html\n\n"
+
+
+
+form=cgi.FieldStorage()
+
+
+#if "site_id" not in form:
+ #   print "<h1>The text input box was empty.</h1>"
+#else:
+ #   VAR_SITE_ID = form.getvalue('site_id')
+ 
+
+
+if "site_name" not in form:
+    print "<h1>The text input box was empty.</h1>"
+else:
+    VAR_SITE_NAME = form.getvalue('site_name')
+    VAR_SITE_NAME = VAR_SITE_NAME.strip()
+    
+
+
+if "ip_address" not in form:
+    print "<h1>The text input box was empty.</h1>"
+else:
+    VAR_IP_ADDRESS= form.getvalue('ip_address')
+    VAR_IP_ADDRESS = VAR_IP_ADDRESS.strip()
+
+
+if "community_name" not in form:
+    print "<h1>The text input box was empty.</h1>"
+else:
+    VAR_COMMUNITY_NAME = form.getvalue('community_name')
+    VAR_COMMUNITY_NAME = VAR_COMMUNITY_NAME.strip()
+
+if "poll_freq" not in form:
+    print "<h1>The text input box was empty.</h1>"
+else:
+    VAR_POLL_FREQ = form.getvalue('poll_freq')
+    VAR_POLL_FREQ = VAR_POLL_FREQ.strip()
+
+VAR_FTP_FREQ = form.getvalue('ftp_freq')
+VAR_FTP_FREQ = VAR_FTP_FREQ.strip()
+
+VAR_FTP_USER = form.getvalue('ftp_user')
+
+VAR_FTP_PASS = form.getvalue('ftp_pass')
+
+VAR_IMG_DIR = form.getvalue('img_dir')
+
+VAR_POLLING_ENABLE = form.getvalue('poll_enable')
+
+VAR_FTP_ENABLE = form.getvalue('ftp_enable')
+
+
+VAR_OBS_SCALAR = form.getlist('obs')
+
+
+pollList = (
+    (VAR_SITE_NAME, VAR_IP_ADDRESS, VAR_COMMUNITY_NAME, VAR_POLL_FREQ, VAR_FTP_FREQ, VAR_FTP_USER, VAR_FTP_PASS, VAR_IMG_DIR, VAR_POLLING_ENABLE, VAR_FTP_ENABLE, VAR_OBS_SCALAR),
+
+)
+
+con = None
+
+try:
+
+    con = psycopg2.connect(database='pollconfdb', user='vmuser')
+
+    cur = con.cursor()
+    
+    #cur.execcute = "DELETE FROM pollers WHERE site_name 
+    
+    query = "INSERT INTO pollers (site_name, ip_address, community_name, poll_freq, ftp_freq, ftp_user, ftp_pass, img_dir, polling_enable, ftp_enable, obs_scalar) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    cur.executemany(query, pollList)
+
+    con.commit()
+  
+except psycopg2.DatabaseError, e:
+    print 'Error %s' % e    
+    sys.exit(1)
+
+    
+finally:
+    
+    if con:
+        con.close()
+
+
+
+#add crontab entry and overwrite if existing (https://pypi.python.org/pypi/python-crontab/1.7.2)
+#'if' statement checks for non-numeric chars to test for crontab or increment input from user
+match_xml = re.search("\D", VAR_POLL_FREQ)
+match_ftp = re.search("\D", VAR_FTP_FREQ)
+
+
+pollcmd = 'cd /tmp; /tmp/poll.py' + ' ' + VAR_SITE_NAME + ' #XML Poll'
+ftpcmd = 'cd /tmp; /tmp/ftppoll.py' + ' ' + VAR_SITE_NAME + ' #FTP poll'
+
+tab = CronTab()
+tab.remove_all(VAR_SITE_NAME)
+
+
+if VAR_POLLING_ENABLE == 'on':
+    job_xml = tab.new(pollcmd)
+
+    if match_xml is None:
+        job_xml.minute.every(VAR_POLL_FREQ)
+    else:
+        job_xml.setall(VAR_POLL_FREQ)
+else:
+    job_xml = tab.new(pollcmd)
+    job_xml.enable(False)
+
+
+if VAR_FTP_ENABLE == 'on':
+    job_ftp = tab.new(ftpcmd)
+
+    if match_ftp is None:
+        print match_ftp
+        job_ftp.minute.every(VAR_FTP_FREQ)
+    else:
+        job_ftp.setall(VAR_FTP_FREQ)
+else:
+    job_ftp = tab.new(ftpcmd)
+    job_ftp.enable(False)
+
+tab.write()
+
+
+
+print "<h2>Site Info Has Been Submitted!</h2>"
+print '<br>'
+print '<br>'
+print '<a href="/index.html">Return to Homepage</a>'
+
