@@ -153,7 +153,7 @@ def showResult(pollList):
     <table border=1>
     <tr><th>SiteName</th><th>SiteIP</th><th>CommunityName</th><th>SnmpPort</th><th>PollFrequency</th><th>FTPFrequency</th><th>FTPUser</th><th>FTPPassword</th><th>ImageDir</th><th>FTPEnable</th><th>PollingEnable</th><th>Parameters</th><th>PollingNode</th></tr>'''
 
-    con = psycopg2.connect(database='pollconfdb', user='vmuser')
+    con = psycopg2.connect(database= db, user= dbUser)
 
     cur = con.cursor()
     cur.execute('SELECT site_name, ip_address, community_name, snmp_port, poll_freq, ftp_freq, ftp_user, ftp_pass, img_dir, polling_enable, ftp_enable, obs_scalar, polling_node FROM pollers WHERE site_name = %s' , (SITE_NAME,))
