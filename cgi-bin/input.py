@@ -10,6 +10,15 @@ import sys
 import os
 import subprocess
 import re
+import paramiko
+from ConfigParser import SafeConfigParser
+
+parser = SafeConfigParser() #from conf file
+parser.read('conf.ini')
+dbUser = parser.get('config', 'dbUser')
+db = parser.get('config', 'db')
+hostlist = parser.get('config', 'hosts')
+hosts = hostlist.split(',')
 
 
 def formData():
@@ -66,7 +75,10 @@ def formData():
 
     OBS_SCALAR = form.getlist('obs')
 
-    pollList = ( (SITE_NAME, IP_ADDRESS, COMMUNITY_NAME, SNMP_PORT, POLL_FREQ, FTP_FREQ, FTP_USER, FTP_PASS, IMG_DIR, POLLING_ENABLE, FTP_ENABLE, OBS_SCALAR), )
+    POLLING_NODE = form.getvalue('polling_node')
+    POLLING_NODE = POLLING_NODE.strip()
+
+    pollList = ( (SITE_NAME, IP_ADDRESS, COMMUNITY_NAME, SNMP_PORT, POLL_FREQ, FTP_FREQ, FTP_USER, FTP_PASS, IMG_DIR, POLLING_ENABLE, FTP_ENABLE, OBS_SCALAR, POLLING_NODE), )
     
     return pollList
 
@@ -82,14 +94,14 @@ def inputDb(pollList):
 
     try:
 
-        con = psycopg2.connect(database='pollconfdb', user='vmuser')
+        con = psycopg2.connect(database= db, user= dbUser)
 
         cur = con.cursor()
        
         #check for existing site information and delete if present
         cur.execute ('DELETE FROM pollers WHERE site_name = %s', (siteName,))  
     
-        query = "INSERT INTO pollers (site_name, ip_address, community_name, snmp_port, poll_freq, ftp_freq, ftp_user, ftp_pass, img_dir, polling_enable, ftp_enable, obs_scalar) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        query = "INSERT INTO pollers (site_name, ip_address, community_name, snmp_port, poll_freq, ftp_freq, ftp_user, ftp_pass, img_dir, polling_enable, ftp_enable, obs_scalar, polling_node) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         cur.executemany(query, pollList)
 
         con.commit()
@@ -105,58 +117,18 @@ def inputDb(pollList):
            con.close()
 
 
+def setCrons():
+    ssh = paramiko.SSHClient()
+    for i in hosts:
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(i, username='vmuser', password='password')
+        stdin, stdout, stderr = ssh.exec_command('/home/vmuser/setcrons.py')
 
-def schedule(pollList):
-    '''Write Crontab entries'''
-
-    #add crontab entry and overwrite if existing (https://pypi.python.org/pypi/python-crontab/1.7.2)
-    
-    #match_* lines check for non-numeric chars to test for crontab or increment input from user-
-    # ie "*" is non-numeric and would mean a crontab style entry
-
-    l = pollList[0]
-    SITE_NAME = l[0]
-    POLL_FREQ = l[4]
-    FTP_FREQ = l[5]
-    POLLING_ENABLE = l[9]
-    FTP_ENABLE = l[10]
-    
-
-    match_xml = re.search("\D", POLL_FREQ)
-    match_ftp = re.search("\D", FTP_FREQ)
+    #print stdout.readlines()
+    #print stderr.readlines()
+        ssh.close()
 
 
-    pollcmd = 'cd /tmp; /tmp/pollxml.py ' + SITE_NAME + ' >> /var/log/vmuser/xml_poll.log' + ' #XML Poll'
-    ftpcmd = 'cd /tmp; /tmp/pollftp.py ' + SITE_NAME + ' >> /var/log/vmuser/jpg_poll.log' + ' #FTP poll'
-
-    tab = CronTab()
-    tab.remove_all(SITE_NAME)
-
-
-    if POLLING_ENABLE == 'on':
-        job_xml = tab.new(pollcmd)
-
-        if match_xml is None:
-            job_xml.minute.every(POLL_FREQ)
-        else:
-            job_xml.setall(POLL_FREQ)
-    else:
-        job_xml = tab.new(pollcmd)
-        job_xml.enable(False)
-
-
-    if FTP_ENABLE == 'on':
-        job_ftp = tab.new(ftpcmd)
-
-        if match_ftp is None:
-            job_ftp.minute.every(FTP_FREQ)
-        else:
-            job_ftp.setall(FTP_FREQ)
-    else:
-        job_ftp = tab.new(ftpcmd)
-        job_ftp.enable(False)
-
-    tab.write()
 
 def printout():
     print "<h2>Site Info Has Been Submitted!</h2>"
@@ -179,14 +151,14 @@ def showResult(pollList):
     <body>
     <h2>Results</h2>
     <table border=1>
-    <tr><th>SiteName</th><th>SiteIP</th><th>CommunityName</th><th>SnmpPort</th><th>PollFrequency</th><th>FTPFrequency</th><th>FTPUser</th><th>FTPPassword</th><th>ImageDir</th><th>FTPEnable</th><th>PollingEnable</th><th>Parameters</th></tr>'''
+    <tr><th>SiteName</th><th>SiteIP</th><th>CommunityName</th><th>SnmpPort</th><th>PollFrequency</th><th>FTPFrequency</th><th>FTPUser</th><th>FTPPassword</th><th>ImageDir</th><th>FTPEnable</th><th>PollingEnable</th><th>Parameters</th><th>PollingNode</th></tr>'''
 
     con = psycopg2.connect(database='pollconfdb', user='vmuser')
 
     cur = con.cursor()
-    cur.execute('SELECT site_name, ip_address, community_name, snmp_port, poll_freq, ftp_freq, ftp_user, ftp_pass, img_dir, polling_enable, ftp_enable, obs_scalar FROM pollers WHERE site_name = %s' , (SITE_NAME,))
+    cur.execute('SELECT site_name, ip_address, community_name, snmp_port, poll_freq, ftp_freq, ftp_user, ftp_pass, img_dir, polling_enable, ftp_enable, obs_scalar, polling_node FROM pollers WHERE site_name = %s' , (SITE_NAME,))
 
-    for (site_name, ip_address, community_name, snmp_port, poll_freq, ftp_freq, ftp_user, ftp_pass, img_dir, polling_enable, ftp_enable, obs_scalar) in cur:
+    for (site_name, ip_address, community_name, snmp_port, poll_freq, ftp_freq, ftp_user, ftp_pass, img_dir, polling_enable, ftp_enable, obs_scalar, polling_node) in cur:
         print '<tr><td>', site_name, '</td>'
         print '<td>', ip_address, '</td>'
         print '<td>', community_name, '</td>'
@@ -198,13 +170,14 @@ def showResult(pollList):
         print '<td>', img_dir, '</td>'
         print '<td>', ftp_enable, '</td>'
         print '<td>', polling_enable, '</td>'
-        print '<td>', obs_scalar, '</td></tr>'
+        print '<td>', obs_scalar, '</td>'
+        print '<td>', polling_node, '</td></tr>'
         print ('</table>')
 
 def main():
     pollList = formData()
     inputDb(pollList)
-    schedule(pollList)
+    setCrons()
     showResult(pollList)
     printout()
 

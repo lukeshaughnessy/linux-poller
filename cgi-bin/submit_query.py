@@ -28,14 +28,14 @@ print '''
 <body>
 <h2>Results</h2>
 <table border=1>
-<tr><th>SiteName</th><th>SiteIP</th><th>CommunityName</th><th>PollFrequency</th><th>FTPFrequency</th><th>FTPUser</th><th>FTPPassword</th><th>ImageDir</th><th>FTPEnable</th><th>PollingEnable</th><th>Parameters</th></tr>'''
+<tr><th>SiteName</th><th>SiteIP</th><th>CommunityName</th><th>PollFrequency</th><th>FTPFrequency</th><th>FTPUser</th><th>FTPPassword</th><th>ImageDir</th><th>FTPEnable</th><th>PollingEnable</th><th>Parameters</th><th>PollingNode</th></tr>'''
 
 con = psycopg2.connect(database='pollconfdb', user='vmuser')
 
 cur = con.cursor()
-cur.execute('SELECT site_name, ip_address, community_name, poll_freq, ftp_freq, ftp_user, ftp_pass, img_dir, polling_enable, ftp_enable, obs_scalar FROM pollers WHERE site_name = %s' , (VAR_QUERY,))
+cur.execute('SELECT site_name, ip_address, community_name, poll_freq, ftp_freq, ftp_user, ftp_pass, img_dir, polling_enable, ftp_enable, obs_scalar, polling_node FROM pollers WHERE site_name = %s' , (VAR_QUERY,))
 
-for (site_name, ip_address, community_name, poll_freq, ftp_freq, ftp_user, ftp_pass, img_dir, polling_enable, ftp_enable, obs_scalar) in cur:
+for (site_name, ip_address, community_name, poll_freq, ftp_freq, ftp_user, ftp_pass, img_dir, polling_enable, ftp_enable, obs_scalar, polling_node) in cur:
     print '<tr><td>', site_name, '</td>'
     print '<td>', ip_address, '</td>'
     print '<td>', community_name, '</td>'
@@ -46,7 +46,8 @@ for (site_name, ip_address, community_name, poll_freq, ftp_freq, ftp_user, ftp_p
     print '<td>', img_dir, '</td>'
     print '<td>', ftp_enable, '</td>'
     print '<td>', polling_enable, '</td>'
-    print '<td>', obs_scalar, '</td></tr>'
+    print '<td>', obs_scalar, '</td>'
+    print '<td>', polling_node, '</td></tr>'
 print ('</table>')
 print ('</body>')
 print ('</html>')
