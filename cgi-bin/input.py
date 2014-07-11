@@ -118,6 +118,8 @@ def inputDb(pollList):
 
 
 def setCrons():
+    '''Trigger crontab rebuild scripts on polling nodes'''
+
     ssh = paramiko.SSHClient()
     for i in hosts:
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -131,12 +133,14 @@ def setCrons():
 
 
 def printout():
+    '''Display results'''
     print "<h2>Site Info Has Been Submitted!</h2>"
     print '<br>'
     print '<br>'
     print '<a href="/index.html">Return to Homepage</a>'
 
 def showResult(pollList):
+    '''Get results from DB'''
 
     l = pollList[0]
     SITE_NAME = l[0]
