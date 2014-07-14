@@ -2,10 +2,20 @@
 # -*- coding: utf-8 -*-
 import psycopg2
 import datetime
+import time
 import subprocess
 from ConfigParser import SafeConfigParser
 from lxml import etree
 import argparse
+
+parser = SafeConfigParser() #from conf file
+parser.read('conf.ini')
+db = parser.get('config', 'db')
+dbUser = parser.get('config', 'dbUser')
+dbHost = parser.get('config', 'dbHost')
+tryTimes = parser.get('config', 'tryTimes')
+tryTimes = int(tryTimes)
+xmlPath = parser.get('config', 'xmlPath')
 
 
 
@@ -17,7 +27,7 @@ def gettime():
 
 
 def pollname():
-    '''Get command argument (name of site) and check for corrent usage'''
+    '''Get command argument (name of site) and check for correct usage'''
     argp = argparse.ArgumentParser()
     argp.add_argument("site", help="Runs an XML poll using the sitename as an argument")
     args = argp.parse_args()
@@ -26,15 +36,11 @@ def pollname():
 
 def dbgetconfigs(siteArg):
     '''Get configuration settings from the db'''
-    parser = SafeConfigParser() #read in from conf file
-    parser.read('conf.ini')
-    db = parser.get('config', 'db')
-    dbUser = parser.get('config', 'dbUser')
 
     con = None
     try:
 
-        con = psycopg2.connect(database = db, user = dbUser)
+        con = psycopg2.connect(database= db, user= dbUser, host= dbHost)
         cur = con.cursor()
         cur.execute('SELECT * FROM pollers WHERE site_name= %s' , (siteArg,))
 
@@ -60,17 +66,15 @@ def dbgetconfigs(siteArg):
 
 
 def snmpget(configs):
-    '''run snmpget shell command to get site obs data'''
-    parser = SafeConfigParser() #again getting from conf file
-    parser.read('conf.ini')
-    tryTimes = parser.get('config', 'tryTimes')
-    tryTimes = int(tryTimes)
+    '''run snmp shell commands to get site obs data and set the time'''
 
     communName = configs[3] #these are coming from the configs tuple created earlier
     ipAddr = configs[2]
     snmpPort = configs[4]
     hostPort = ipAddr+':'+snmpPort 
     obsList = configs[12]
+    
+    epochTime = str(int(time.time()))
 
     #call shell command and get exit status; if 0 (success), break. If not 0, try x times as set by tryTimes. 
     for i in range(tryTimes):
@@ -80,16 +84,17 @@ def snmpget(configs):
         if rc == 0:
             break
 
+    #set time on RPU
+    q = subprocess.Popen(["/usr/bin/snmpset", "-m", "GLOBAL", "-Oqse", "-v2c", "-c", communName, hostPort, "globalTime.0", "=", epochTime], stdout=subprocess.PIPE)
+    output, err = q.communicate()
+
     array = output.splitlines() # gets the list of readings and puts them into an array
     return array
 
-
+    
 
 def xmlwrite(configs, array, timeStamp): # using 'lxml' python lib for this, see http://lxml.de/tutorial.html
     '''format XML and write to file'''
-    parser = SafeConfigParser() #from conf file
-    parser.read('conf.ini')
-    xmlPath = parser.get('config', 'xmlPath')
     siteName = configs[1]
     fileName = xmlPath + siteName + '-obs_' + timeStamp + '.xml'
 
@@ -123,10 +128,6 @@ def xmlstore(configs, obsData, timeStamp):
     obsData = obsData
     siteName = configs[1]
 
-    parser = SafeConfigParser() #from conf file
-    parser.read('conf.ini')
-    db = parser.get('config', 'db')
-    dbUser = parser.get('config', 'dbUser')
     
     inputList = (
         (siteName, obsData),
@@ -136,8 +137,7 @@ def xmlstore(configs, obsData, timeStamp):
 
     try:
 
-        con = psycopg2.connect(database = db, user = dbUser)
-
+        con = psycopg2.connect(database= db, user= dbUser, host= dbHost)
         cur = con.cursor()
 
         #cur.execute("INSERT INTO xmldata VALUES (%s)", (siteName))
