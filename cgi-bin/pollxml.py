@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+#Polling script to connect to site, get obs data and set rpu time.
+
 import psycopg2
 import datetime
 import time

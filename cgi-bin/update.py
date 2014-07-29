@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-
+#web interface to submit query to DB
 
 import cgi
 import cgitb

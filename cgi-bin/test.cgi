@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# web interface to run polling scripts for testing
+
 eval $QUERY_STRING
 
 

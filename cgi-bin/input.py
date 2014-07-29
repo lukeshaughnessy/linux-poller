@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+#gets user input for site configuration and enters config params into DB
 
 from crontab import CronTab
 import cgi

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-
+#generate webpage showing site config params
 
 import cgi
 import cgitb

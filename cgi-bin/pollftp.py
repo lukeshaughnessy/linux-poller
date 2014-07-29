@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+#FTP script to connect to sites and download image files
 import sys
 from ConfigParser import SafeConfigParser
 import os

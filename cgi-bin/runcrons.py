@@ -1,4 +1,7 @@
 #!/usr/bin/python
+
+# connects to polling nodes and triggers setcrons.py to rebuild cron jobs
+
 import cgi
 import cgitb
 import paramiko
