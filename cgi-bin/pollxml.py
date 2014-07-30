@@ -90,7 +90,8 @@ def snmpget(configs):
     q = subprocess.Popen(["/usr/bin/snmpset", "-m", "GLOBAL", "-Oqse", "-v2c", "-c", communName, hostPort, "globalTime.0", "=", epochTime], stdout=subprocess.PIPE)
     output, err = q.communicate()
 
-    array = output.splitlines() # gets the list of readings and puts them into an array
+    # gets the list of readings and puts them into an array
+    array = output.splitlines()
     return array
 
     
