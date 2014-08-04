@@ -5,6 +5,7 @@
 import psycopg2
 import datetime
 import time
+import random
 import subprocess
 from ConfigParser import SafeConfigParser
 from lxml import etree
@@ -32,9 +33,22 @@ def pollname():
     '''Get command argument (name of site) and check for correct usage'''
     argp = argparse.ArgumentParser()
     argp.add_argument("site", help="Runs an XML poll using the sitename as an argument")
+    argp.add_argument("-s", "--stagger", action="store_true", help="Introduces a randomized delay to poller script")
     args = argp.parse_args()
     siteArg = args.site
-    return siteArg
+    
+    if args.stagger:
+        staggerOn = 1
+    else:
+        staggerOn = 0
+		
+    return (siteArg, staggerOn)
+	
+	
+def staggerPolls(staggerOn):
+    if staggerOn == 1:
+        delayTime = random.randrange(0,30)
+        time.sleep(delayTime)
 
 def dbgetconfigs(siteArg):
     '''Get configuration settings from the db'''
@@ -160,8 +174,9 @@ def xmlstore(configs, obsData, timeStamp):
     print 'XML file stored to database: ' + siteName +' '+ timeStamp
 
 def main():
-    siteArg = pollname()
+    siteArg, staggerOn = pollname()
     timeStamp = gettime()
+    staggerPolls(staggerOn)
     configs = dbgetconfigs(siteArg)
     array = snmpget(configs)
     obsData = xmlwrite(configs, array, timeStamp)
