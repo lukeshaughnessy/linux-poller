@@ -3,26 +3,48 @@
 import sys
 from ConfigParser import SafeConfigParser
 import os
+import random
 import warnings
-warnings.simplefilter("ignore", DeprecationWarning)
 from sets import Set
 from ftplib import FTP
 import datetime
+import time
 import argparse
 import psycopg2
 
+#ignore warning for "set" module, it's not used by default anyway since onlyDiff is False (in moveFTPFiles function below)
+warnings.simplefilter("ignore", DeprecationWarning)
 
+#read configs in from conf.ini file
 parser = SafeConfigParser()
 parser.read('conf.ini')
-
+db = parser.get('config', 'db')
+dbUser = parser.get('config', 'dbUser')
+localPath = parser.get('config', 'localPath')
 
 def pollname():
-    '''Get sitename as argument to command from CLI'''
+    '''Get command argument (name of site) and check for correct usage'''
     argp = argparse.ArgumentParser()
     argp.add_argument("site", help="runs a JPG poll using the sitename as an argument")
+    argp.add_argument("-s", "--stagger", action="store_true", help="Introduces a randomized delay to poller script")
     args = argp.parse_args()
+    
+    #this is the sitename in the command, e.g. "pollftp.py hwy20" where "hwy20" is the sitename
     siteArg = args.site
-    return siteArg
+    
+    #check for -s or --stagger arg
+    if args.stagger:
+        staggerOn = 1
+    else:
+        staggerOn = 0
+        
+    return (siteArg, staggerOn)
+    
+def staggerpolls(staggerOn):
+    '''Set optional random delay to execute script'''
+    if staggerOn == 1:
+        delayTime = random.randrange(0,30)
+        time.sleep(delayTime)    
 
 def gettime():
     '''get the time and format it'''
@@ -32,12 +54,8 @@ def gettime():
 
 def dbgetconfigs(siteArg):
     '''Get configuration settings from the db'''
-    parser = SafeConfigParser() #read in from conf file
-    parser.read('conf.ini')
-    db = parser.get('config', 'db')
-    dbUser = parser.get('config', 'dbUser')
-
     con = None
+    
     try:
 
         con = psycopg2.connect(database = db, user = dbUser)
@@ -60,14 +78,19 @@ def dbgetconfigs(siteArg):
 
         if con:
             con.close()
-    return configs   #configs is now a tuple (immutable list if you must know) with all the configuation params
+    #"configs" is now a tuple with all the configuation params
+    return configs   
 
 
 
-def moveFTPFiles(siteArg,timeStamp,serverName,userName,passWord,remotePath,localPath,deleteRemoteFiles=False,onlyDiff=False):
+def moveFTPFiles(configs,timeStamp,localPath,siteArg,deleteRemoteFiles=False,onlyDiff=False):
     """Connect to an FTP server and bring down files to a local directory"""
-
-
+    
+    serverName = configs[2]
+    userName = configs[7]
+    passWord = configs[8]
+    remotePath = configs[9]
+    
     try:
         ftp = FTP(serverName)
         ftp.set_pasv(False)
@@ -75,7 +98,8 @@ def moveFTPFiles(siteArg,timeStamp,serverName,userName,passWord,remotePath,local
         print "Couldn't find server"
     ftp.login(userName,passWord)
     ftp.cwd(remotePath)
-    try:     
+    
+    try:
         print "Connecting..."
         if onlyDiff:
             lFileSet = Set(os.listdir(localPath))
@@ -90,7 +114,7 @@ def moveFTPFiles(siteArg,timeStamp,serverName,userName,passWord,remotePath,local
             for i in tList:
                 if i.endswith('.jpg'):
                     transferList.append(i)
-
+    
         delMsg = "" 
         filesMoved = 0
         for fl in transferList:
@@ -110,14 +134,14 @@ def moveFTPFiles(siteArg,timeStamp,serverName,userName,passWord,remotePath,local
             if deleteRemoteFiles:
                 ftp.delete(fl)
                 delMsg = " and Deleted"
-
+    
         print siteArg
         print "Files Moved" + delMsg + ": " + str(filesMoved) +  " on " + timeStamp
         print transferList 
         print "--------------------------"
 
     except:   
-        print "Connection Error - " + timeStamp
+       print "Connection Error - " + timeStamp
     ftp.close() # Close FTP connection
     ftp = None
  
@@ -126,17 +150,10 @@ def moveFTPFiles(siteArg,timeStamp,serverName,userName,passWord,remotePath,local
 
 def main():
     '''Get various parameters from DB (user, password, etc) and run the FTP download'''
-    siteArg = pollname()
+    siteArg, staggerOn = pollname()
+    staggerpolls(staggerOn)
     timeStamp = gettime()
     configs = dbgetconfigs(siteArg)
-    serverName = configs[2]
-    userName = configs[7]
-    passWord = configs[8]
-    remotePath = configs[9]
-    localPath = parser.get('config', 'localPath')
-    moveFTPFiles(siteArg,timeStamp,serverName,userName,passWord,remotePath,localPath,deleteRemoteFiles=False,onlyDiff=False)
+    moveFTPFiles(configs,timeStamp,localPath,siteArg,deleteRemoteFiles=False,onlyDiff=False)
 
 main()
-
-
-
