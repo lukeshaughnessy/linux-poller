@@ -127,8 +127,6 @@ def setCrons():
         ssh.connect(i, username='vmuser', password='password')
         stdin, stdout, stderr = ssh.exec_command('/home/vmuser/setcrons.py')
 
-    #print stdout.readlines()
-    #print stderr.readlines()
         ssh.close()
 
 
@@ -186,6 +184,4 @@ def main():
     showResult(pollList)
     printout()
 
-
 main()
- 
